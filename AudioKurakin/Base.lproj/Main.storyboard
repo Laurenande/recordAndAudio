@@ -27,7 +27,7 @@
                                 <rect key="frame" x="28" y="570" width="120" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="filled" title="Play"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Play record"/>
                                 <connections>
                                     <action selector="play:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Lsf-o5-FeM"/>
                                 </connections>
@@ -36,7 +36,7 @@
                                 <rect key="frame" x="176" y="570" width="127" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="filled" title="Pause"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Play music"/>
                                 <connections>
                                     <action selector="rec:" destination="BYZ-38-t0r" eventType="touchUpInside" id="k73-kM-0hy"/>
                                 </connections>
@@ -45,6 +45,21 @@
                                 <rect key="frame" x="158" y="231" width="112" height="95"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </activityIndicatorView>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Hx3-zV-igA">
+                                <rect key="frame" x="301" y="433" width="45" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" image="square.and.arrow.up.fill" catalog="system"/>
+                                <connections>
+                                    <action selector="shareRec:" destination="BYZ-38-t0r" eventType="touchUpInside" id="b7L-w1-3Qm"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pd9-7l-ALI">
+                                <rect key="frame" x="176" y="633" width="127" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" title="Start record"/>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -53,6 +68,7 @@
                         <outlet property="indicatorView" destination="XQK-mC-jPc" id="OCx-ne-Uug"/>
                         <outlet property="play" destination="ebb-rq-tOO" id="2Hh-1q-y2R"/>
                         <outlet property="rec" destination="bug-dT-whi" id="s9t-Wr-b1X"/>
+                        <outlet property="text" destination="1Bh-rh-myq" id="eix-XW-93b"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -61,6 +77,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="square.and.arrow.up.fill" catalog="system" width="115" height="128"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

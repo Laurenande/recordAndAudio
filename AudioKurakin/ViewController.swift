@@ -7,13 +7,16 @@
 
 import UIKit
 import AVFoundation
-//import AudioToolbox
+import AudioToolbox
 import Speech
+import lame
 
 class ViewController: UIViewController {
-    
+    var content: [String]? = []
+
     @IBOutlet weak var indicatorView: UIActivityIndicatorView!
     
+    @IBOutlet weak var text: UILabel!
     //Main Audio Engine
     var audioEngine : AVAudioEngine!
     
@@ -34,11 +37,14 @@ class ViewController: UIViewController {
     
     //Used to define filepath to save recorded file
     var filePath : String? = nil
+    var filePathMP3: String? = nil
     
     
+    let mytime = Date()
+    let format = DateFormatter()
     var isPlay = false
     var isRec = false
-    
+    let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
     @IBOutlet var play: UIButton!
     
     //Called On Play Button
@@ -76,10 +82,55 @@ class ViewController: UIViewController {
             self.startRecord()
         }
     }
-    
+    @IBAction func shareRec(_ sender: Any) {
+        
+
+        let fileURL = NSURL(fileURLWithPath: filePathMP3 ?? "nil")
+
+        // Create the Array which includes the files you want to share
+        var filesToShare = [Any]()
+
+        // Add the path of the file to the Array
+        filesToShare.append(fileURL)
+
+        // Make the activityViewContoller which shows the share-view
+        let activityViewController = UIActivityViewController(activityItems: filesToShare, applicationActivities: nil)
+
+        // Show the share-view
+        self.present(activityViewController, animated: true, completion: nil)
+         
+        /*
+        let objectsToShare = [link] as [Any]
+            let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: nil)
+            activityVC.excludedActivityTypes = [UIActivity.ActivityType.airDrop, UIActivity.ActivityType.addToReadingList]
+            
+            //activityVC.popoverPresentationController?.sourceView = self.shareBtn
+            
+            self.present(activityVC, animated: true, completion: nil)*/
+    }
+    func openDir() {
+       // let fileManager = FileManager.default
+        //let filePathName = "\(dir)/temp2022-07-26 12:13:55 +0000.wav"
+        /*
+        do{
+        try fileManager.removeItem(atPath: filePathName)
+        }catch{
+            print("Nook")
+        }*/
+        do {
+            self.content = try FileManager.default.contentsOfDirectory(atPath: self.dir)
+            
+        } catch  {
+            content = []
+        }
+        print(Date.now)
+        for i in 0...content!.count - 1
+        {
+        print(self.content![i])
+        }
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         
         // MARK: 2 - Setting Up
         
@@ -114,6 +165,9 @@ class ViewController: UIViewController {
                 return
             }
         }
+    }
+    override func viewDidDisappear(_ animated: Bool) {
+        openDir()
     }
     
     
@@ -154,9 +208,11 @@ class ViewController: UIViewController {
                                              completionHandler: self.completion)
         
         //Set up directory for saving recording
-        let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
-        self.filePath =  dir.appending("/temp.wav")
+        self.format.dateFormat = "yyyy-MM-dd-HH:mm"
+        let date = self.format.string(from: mytime)
+        self.filePath =  dir.appending("/record-\(String(date)).m4a")
         
+        //text.text =
         //Create file to save recording
         _ = ExtAudioFileCreateWithURL(URL(fileURLWithPath: self.filePath!) as CFURL,
                                       kAudioFileWAVEType,
@@ -180,6 +236,9 @@ class ViewController: UIViewController {
         
         //Play 1K.mp3
         self.audioFilePlayer.play()
+        //
+        
+        
     }
     
     func stopRecord() {
@@ -202,6 +261,9 @@ class ViewController: UIViewController {
         
         //Parse the audio input received (wip. NOT USED IN RECORDING OR PLAYING)
         ParseAudioFile()
+        print(filePath)
+        self.startMP3Rec(path: self.filePath!, rate: 128)
+        
     }
     
     func startPlay() -> Bool {
@@ -236,6 +298,7 @@ class ViewController: UIViewController {
         self.audioFilePlayer.play()
         
         return true
+        
     }
     
     //INCOMPLETE (WIP. UNUSED)
@@ -248,8 +311,9 @@ class ViewController: UIViewController {
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(totSamples))!
         try! audioFile.read(into: buffer)
         print(buffer.frameLength)
-        
+        self.startMP3Rec(path: self.filePath!, rate: 128)
         //Get amplitude from buffer frames here
+        
     }
     
     func stopPlay() {
@@ -265,6 +329,8 @@ class ViewController: UIViewController {
         
         //Deactivate audio session
         try! AVAudioSession.sharedInstance().setActive(false)
+        
+        
     }
     
     //Called at the audioplayer.schedule to adjust UI
@@ -294,5 +360,61 @@ class ViewController: UIViewController {
             }
         }
     }
+    func startMP3Rec(path: String, rate: Int32) {
+
+            let isMP3Active = true
+            var total = 0
+            var read = 0
+            var write: Int32 = 0
+
+            let mp3path = path.replacingOccurrences(of: "m4a", with: "mp3")
+        print(mp3path)
+        
+            var pcm: UnsafeMutablePointer<FILE> = fopen(path, "rb")
+            fseek(pcm, 4*1024, SEEK_CUR)
+            let mp3: UnsafeMutablePointer<FILE> = fopen(mp3path, "wb")
+            let PCM_SIZE: Int = 8192
+            let MP3_SIZE: Int32 = 8192
+            let pcmbuffer = UnsafeMutablePointer<Int16>.allocate(capacity: Int(PCM_SIZE*2))
+            let mp3buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: Int(MP3_SIZE))
+
+            let lame = lame_init()
+            lame_set_num_channels(lame, 1)
+            lame_set_mode(lame, MONO)
+            lame_set_in_samplerate(lame, 44100)
+            lame_set_brate(lame, rate)
+            lame_set_VBR(lame, vbr_off)
+            lame_init_params(lame)
+
+            DispatchQueue.global(qos: .default).async {
+                while true {
+                    pcm = fopen(path, "rb")
+                    fseek(pcm, 4*1024 + total, SEEK_CUR)
+                    read = fread(pcmbuffer, MemoryLayout<Int16>.size, PCM_SIZE, pcm)
+                    if read != 0 {
+                        write = lame_encode_buffer(lame, pcmbuffer, nil, Int32(read), mp3buffer, MP3_SIZE)
+                        fwrite(mp3buffer, Int(write), 1, mp3)
+                        total += read * MemoryLayout<Int16>.size
+                        fclose(pcm)
+                        
+                    } else if !isMP3Active {
+                        _ = lame_encode_flush(lame, mp3buffer, MP3_SIZE)
+                        _ = fwrite(mp3buffer, Int(write), 1, mp3)
+                        
+                        break
+                    } else {
+                        fclose(pcm)
+                        usleep(50)
+                    }
+                    
+                }
+                lame_close(lame)
+                fclose(mp3)
+                fclose(pcm)
+                
+                
+            }
+        self.filePathMP3 = mp3path
+        }
     
 }
