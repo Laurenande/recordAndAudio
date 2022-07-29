@@ -7,11 +7,12 @@
 
 import UIKit
 import AVFoundation
-import AudioToolbox
+//import AudioToolbox
 import Speech
 import lame
 
 class ViewController: UIViewController {
+    //File on document Directory
     var content: [String]? = []
 
     @IBOutlet weak var indicatorView: UIActivityIndicatorView!
@@ -20,10 +21,10 @@ class ViewController: UIViewController {
     //Main Audio Engine
     var audioEngine : AVAudioEngine!
     
-    //Used to play 1K during recording and Final recording during play
+    //Used to play myAduio during recording and Final recording during play
     var audioFile : AVAudioFile!
     
-    //Player for playing 1K.mp3
+    //Player for playing myAudio
     var audioPlayer : AVAudioPlayerNode!
     
     //Extended Audio File Services to attach to audioFile
@@ -32,21 +33,21 @@ class ViewController: UIViewController {
     //Player for playing recorded file
     var audioFilePlayer: AVAudioPlayerNode!
     
-    //Mixer to mix 1K with mic input during recording
+    //Mixer to mix myAudio with mic input during recording
     var mixer : AVAudioMixerNode!
     
     //Used to define filepath to save recorded file
     var filePath : String? = nil
     var filePathMP3: String? = nil
     
-    
+    //Add now date in name record file
     let mytime = Date()
-    let format = DateFormatter()
+    let formatDate = DateFormatter()
     var isPlay = false
     var isRec = false
-    let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
+    //let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
     @IBOutlet var play: UIButton!
-    
+
     //Called On Play Button
     @IBAction func play(_ sender: Any) {
         
@@ -98,16 +99,9 @@ class ViewController: UIViewController {
 
         // Show the share-view
         self.present(activityViewController, animated: true, completion: nil)
-         
-        /*
-        let objectsToShare = [link] as [Any]
-            let activityVC = UIActivityViewController(activityItems: objectsToShare, applicationActivities: nil)
-            activityVC.excludedActivityTypes = [UIActivity.ActivityType.airDrop, UIActivity.ActivityType.addToReadingList]
-            
-            //activityVC.popoverPresentationController?.sourceView = self.shareBtn
-            
-            self.present(activityVC, animated: true, completion: nil)*/
+        
     }
+    
     func openDir() {
        // let fileManager = FileManager.default
         //let filePathName = "\(dir)/temp2022-07-26 12:13:55 +0000.wav"
@@ -115,10 +109,13 @@ class ViewController: UIViewController {
         do{
         try fileManager.removeItem(atPath: filePathName)
         }catch{
-            print("Nook")
+            print("No ok")
         }*/
+        
+        //Test my work on File Manager
+        let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
         do {
-            self.content = try FileManager.default.contentsOfDirectory(atPath: self.dir)
+            self.content = try FileManager.default.contentsOfDirectory(atPath: dir)
             
         } catch  {
             content = []
@@ -132,30 +129,28 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // MARK: 2 - Setting Up
-        
         //Main AudioEngine
         self.audioEngine = AVAudioEngine()
         
-        //Used to play 1K.mp3
+        //Used to play myAudio
         self.audioFilePlayer = AVAudioPlayerNode()
         
         //Mixes two inputs
         self.mixer = AVAudioMixerNode()
         
-        //Attaches 1K.mp3 input to audio engine
+        //Attaches myAudio input to audio engine
         self.audioEngine.attach(audioFilePlayer)
         
         //Attaches the mixer to the audio engine
         self.audioEngine.attach(mixer)
         
         self.indicator(value: false)
+        
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // MARK: 1 - Asks user for microphone permission
         
         SFSpeechRecognizer.requestAuthorization { authStatus in
             switch authStatus {
@@ -178,29 +173,30 @@ class ViewController: UIViewController {
         //is recording = true
         self.isRec = true
         
-        // установка сессии
+        //Setup session
         try! AVAudioSession.sharedInstance().setCategory(AVAudioSession.Category.playAndRecord)
         try! AVAudioSession.sharedInstance().setActive(true)
         
-        // загрузка музыкы на фон
+        // Load myAudio to background
         self.audioFile = try! AVAudioFile(forReading: Bundle.main.url(forResource: "myAudio", withExtension: "mp3")!)
         
-        // MARK: 5 - Configure Recording format
+        let dir = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as String
+        
         let format = AVAudioFormat(commonFormat: AVAudioCommonFormat.pcmFormatInt16,
                                    sampleRate: 44100.0,
                                    channels: 1,
                                    interleaved: true)
         
-        //Connect Microphone to mixer
+        //Connect microphone to mixer
         self.audioEngine.connect(self.audioEngine.inputNode, to: self.mixer, format: format)
         
-        //Connect 1K.mp3 to mixer (Uncomment if you want background sound during recording)
+        //Connect myAudio to mixer
         self.audioEngine.connect(self.audioFilePlayer, to: self.mixer, format: self.audioFile.processingFormat)
         
         //Connect mixer to mainMixer
         self.audioEngine.connect(self.mixer, to: self.audioEngine.mainMixerNode, format: format)
         
-        //Configure 1K.mp3 player settings (Uncomment if you want background sound during recording)
+        //Configure 1K.mp3 player settings
          self.audioFilePlayer.scheduleSegment(audioFile,
                                              startingFrame: AVAudioFramePosition(0),
                                              frameCount: AVAudioFrameCount(self.audioFile.length),
@@ -208,11 +204,10 @@ class ViewController: UIViewController {
                                              completionHandler: self.completion)
         
         //Set up directory for saving recording
-        self.format.dateFormat = "yyyy-MM-dd-HH:mm"
-        let date = self.format.string(from: mytime)
+        self.formatDate.dateFormat = "yyyy-MM-dd-HH:mm"
+        let date = self.formatDate.string(from: mytime)
         self.filePath =  dir.appending("/record-\(String(date)).m4a")
         
-        //text.text =
         //Create file to save recording
         _ = ExtAudioFileCreateWithURL(URL(fileURLWithPath: self.filePath!) as CFURL,
                                       kAudioFileWAVEType,
@@ -221,7 +216,7 @@ class ViewController: UIViewController {
                                       AudioFileFlags.eraseFile.rawValue,
                                       &outref)
         
-        //Tap on the mixer output (MIXER HAS BOTH MICROPHONE AND 1K.mp3)
+        //Tap on the mixer output microphone and myAudio
         self.mixer.installTap(onBus: 0, bufferSize: AVAudioFrameCount((format?.sampleRate)! * 0.4), format: format, block: { (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
             
             //Audio Recording Buffer
@@ -230,13 +225,11 @@ class ViewController: UIViewController {
             //Write Buffer to File
             _ = ExtAudioFileWrite(self.outref!, buffer.frameLength, audioBuffer.audioBufferList)
         })
-        
-        //Start Engine
+        self.audioEngine.inputNode.isVoiceProcessingInputMuted = true
         try! self.audioEngine.start()
         
-        //Play 1K.mp3
         self.audioFilePlayer.play()
-        //
+    
         
         
     }
@@ -244,10 +237,8 @@ class ViewController: UIViewController {
     func stopRecord() {
         self.isRec = false
         
-        //Stop playing 1K file
         self.audioFilePlayer.stop()
         
-        //Stop Engine
         self.audioEngine.stop()
         
         //Removes tap on Engine Mixer
@@ -259,9 +250,9 @@ class ViewController: UIViewController {
         //Deactivate audio session
         try! AVAudioSession.sharedInstance().setActive(false)
         
-        //Parse the audio input received (wip. NOT USED IN RECORDING OR PLAYING)
+        //Parse the audio input received
         ParseAudioFile()
-        print(filePath)
+        //print(filePath)
         self.startMP3Rec(path: self.filePath!, rate: 128)
         
     }
@@ -290,18 +281,14 @@ class ViewController: UIViewController {
                                              frameCount: AVAudioFrameCount(self.audioFile.length),
                                              at: nil,
                                              completionHandler: self.completion)
-        
-        //start audio engine
         try! self.audioEngine.start()
         
-        //start playing the audio player
         self.audioFilePlayer.play()
         
         return true
         
     }
     
-    //INCOMPLETE (WIP. UNUSED)
     func ParseAudioFile() {
         
         self.audioFile = try! AVAudioFile(forReading: URL(fileURLWithPath: self.filePath!))
@@ -310,9 +297,8 @@ class ViewController: UIViewController {
         let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: audioFile.fileFormat.sampleRate, channels: 1, interleaved: false)!
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(totSamples))!
         try! audioFile.read(into: buffer)
-        print(buffer.frameLength)
+        
         self.startMP3Rec(path: self.filePath!, rate: 128)
-        //Get amplitude from buffer frames here
         
     }
     
@@ -323,8 +309,7 @@ class ViewController: UIViewController {
         if self.audioFilePlayer != nil && self.audioFilePlayer.isPlaying {
             self.audioFilePlayer.stop()
         }
-        
-        //Stop the audio engine
+    
         self.audioEngine.stop()
         
         //Deactivate audio session
@@ -360,6 +345,7 @@ class ViewController: UIViewController {
             }
         }
     }
+    //Convert m4a to mp3
     func startMP3Rec(path: String, rate: Int32) {
 
             let isMP3Active = true
@@ -368,7 +354,6 @@ class ViewController: UIViewController {
             var write: Int32 = 0
 
             let mp3path = path.replacingOccurrences(of: "m4a", with: "mp3")
-        print(mp3path)
         
             var pcm: UnsafeMutablePointer<FILE> = fopen(path, "rb")
             fseek(pcm, 4*1024, SEEK_CUR)
